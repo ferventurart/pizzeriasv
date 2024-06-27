@@ -2,7 +2,7 @@
 
 Este repositorio contiene un ejemplo práctico en .NET 8 que ilustra cómo comunicar dos microservicios mediante Azure Service Bus utilizando MassTransit para la gestión de mensajes.
 
-## Microservicio de Recepción de Órdenes
+## 📲 Microservicio de Recepción de Órdenes
 
 ### Descripción
 Este microservicio expone un endpoint `orders` que acepta peticiones para crear órdenes de pizzas. Las órdenes son enviadas al Azure Service Bus para ser procesadas.
@@ -16,7 +16,7 @@ Este microservicio expone un endpoint `orders` que acepta peticiones para crear 
 - Recepción de peticiones para crear órdenes de pizzas.
 - Envío asincrónico de órdenes al Azure Service Bus para su procesamiento.
 
-## Microservicio de Procesamiento de Órdenes
+## 👨🏻‍🍳 Microservicio de Procesamiento de Órdenes
 
 ### Descripción
 Este microservicio está suscrito a una cola de órdenes en Azure Service Bus. Procesa las órdenes recibidas de manera asincrónica.
