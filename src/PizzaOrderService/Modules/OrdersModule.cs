@@ -1,8 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentValidation;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Any;
+using PizzaOrderService.Events;
 using PizzaOrderService.Models;
 
 namespace PizzaOrderService.Modules;
@@ -49,6 +51,7 @@ public static class OrdersModule
                 IValidator<OrderRequest> validator,
                 OrderRequest request,
                 AppDbContext dbContext,
+                ISendEndpointProvider bus,
                 CancellationToken cancellationToken) =>
             {
                 var validationResult = await validator.ValidateAsync(request, cancellationToken);
@@ -75,6 +78,18 @@ public static class OrdersModule
 
                 await dbContext.SaveChangesAsync(cancellationToken);
 
+                var endpoint = await bus.GetSendEndpoint(new Uri("queue:kitchen.orders"));
+
+                await endpoint.Send(new KitchenOrderEvent
+                {
+                    Id = order.Id,
+                    CreatedAt = order.Timestamp,
+                    Quantity = order.Quantity,
+                    Size = order.Size,
+                    Status = order.Status,
+                    Toppings = order.Toppings.ToList(),
+                }, cancellationToken);
+                
                 return Results.Created("orders/id", order.Id);
             })
             .WithSummary("Create a new pizza order.")

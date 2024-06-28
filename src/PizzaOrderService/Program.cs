@@ -1,4 +1,5 @@
 using FluentValidation;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using PizzaOrderService;
@@ -32,6 +33,14 @@ builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly, includeInte
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseInMemoryDatabase(databaseName: "PizzaOrders");
+});
+
+builder.Services.AddMassTransit(busConfigurator =>
+{
+    busConfigurator.UsingAzureServiceBus((context, cfg) =>
+    {
+        cfg.Host(builder.Configuration.GetConnectionString("ServiceBus"));
+    });
 });
 
 var app = builder.Build();
