@@ -1,0 +1,69 @@
+@using Web.Services
+@using Refit
+@using Web.Helpers
+@using Severity = MudBlazor.Severity
+@inject IPizzaOrderApi PizzaOrderApi;
+
+<MudSimpleTable>
+    <thead>
+    <tr>
+        <th>Order Number</th>
+        <th>Quantity</th>
+        <th>Toppings</th>
+        <th>Size</th>
+        <th>Status</th>
+        <th>Date</th>
+    </tr>
+    @foreach (var order in Orders)
+    {
+        <tr>
+            <td>@GuidConverter.ConvertGuidToShortString(order.Id)</td>
+            <td>@order.Quantity</td>
+            <td>
+                @foreach (var topping in order.Toppings)
+                {
+                    <MudChip T="string" Variant="Variant.Text" Color="Color.Dark">@topping</MudChip>
+                }
+            </td>
+            <td>@order.Size</td>
+            <td>
+                @if (order.Status == "Created")
+                {
+                    <MudChip T="string" Icon="@Icons.Material.Filled.Article" Color="Color.Info">Created</MudChip>
+                }
+                @if (order.Status == "Preparing")
+                {
+                    <MudChip T="string" Icon="@Icons.Material.Filled.BreakfastDining" Color="Color.Secondary">Preparing</MudChip>
+                }
+                @if (order.Status == "Baked")
+                {
+                    <MudChip T="string" Icon="@Icons.Material.Filled.RadioButtonChecked" Color="Color.Warning">Baked</MudChip>
+                }
+                @if (order.Status == "Delivered")
+                {
+                    <MudChip T="string" Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success">Delivered</MudChip>
+                }
+            </td>
+            <td>@order.Timestamp.ToString("dd MMM yyyy HH:mm")</td>
+        </tr>
+    }
+    </thead>
+</MudSimpleTable>
+
+@code {
+    [Inject] ISnackbar Snackbar { get; set; }
+    IReadOnlyList<OrderResponse> Orders { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Orders = await PizzaOrderApi.GetOrders();
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add("Something goes wrong loading orders! Please try again", Severity.Warning);
+        }
+    }
+
+}

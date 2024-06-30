@@ -43,6 +43,17 @@ builder.Services.AddMassTransit(busConfigurator =>
     });
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "WebApp",
+        policy  =>
+        {
+            policy.WithOrigins("https://localhost:7160")
+                  .AllowAnyHeader()
+                  .WithMethods("POST", "PUT", "DELETE", "GET");
+        });
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -51,6 +62,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.RegisterOrdersEndpoints();
+
+app.UseCors("WebApp");
 
 app.UseHttpsRedirection();
 

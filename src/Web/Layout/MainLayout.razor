@@ -1,0 +1,23 @@
+﻿@using MudBlazor
+@inherits LayoutComponentBase
+
+<MudThemeProvider/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <MudAppBar Elevation="3" Color="Color.Dark">
+        <MudAvatar Color="Color.Warning" Variant="Variant.Filled">
+            <MudIcon  Icon="@Icons.Material.Filled.LocalPizza" />
+        </MudAvatar>
+        <MudText Typo="Typo.h5" Class="ml-3">
+            Pizzeria
+        </MudText>
+    </MudAppBar>
+    <MudMainContent>
+        <MudContainer Class="mt-16 px-8" MaxWidth="MaxWidth.False">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>

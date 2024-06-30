@@ -13,9 +13,33 @@ public static class OrdersModule
 {
     public static void RegisterOrdersEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("orders").WithTags("Orders");
+        var group = endpoints.MapGroup("api/orders/").WithTags("Orders");
 
-        group.MapGet("orders/{id:guid}", async (Guid id, AppDbContext dbContext, CancellationToken cancellationToken) =>
+        group.MapGet("", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+            {
+                var orders = await dbContext.Orders.ToListAsync(cancellationToken);
+
+                
+                var response = orders.Select(s => new OrderResponse
+                {
+                    Id = s.Id,
+                    Quantity = s.Quantity,
+                    Size = s.Size,
+                    Timestamp = s.Timestamp,
+                    Toppings = s.Toppings.ToList()
+                });
+
+                return Results.Ok(response);
+            })
+            .WithSummary("Get all pizza orders.")
+            .WithDescription("Get all the pizza orders.")
+            .WithName("GetOrders")
+            .WithOpenApi()
+            .Produces<List<OrderResponse>>()
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
+        
+        group.MapGet("{id:guid}", async (Guid id, AppDbContext dbContext, CancellationToken cancellationToken) =>
             {
                 var order = await dbContext.Orders.SingleOrDefaultAsync(s => s.Id == id, cancellationToken);
 
@@ -47,7 +71,7 @@ public static class OrdersModule
             .Produces<OrderResponse>()
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        group.MapPost("orders", async (
+        group.MapPost("", async (
                 IValidator<OrderRequest> validator,
                 OrderRequest request,
                 AppDbContext dbContext,

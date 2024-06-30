@@ -1,0 +1,210 @@
+@using Web.Models
+@using FluentValidation
+@using Refit
+@using Web.Services
+@using Severity = MudBlazor.Severity
+@inject IPizzaOrderApi PizzaOrderApi;
+
+
+@if (_visible)
+{
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px"/>
+    <MudCardContent>
+        <MudSkeleton Width="30%" Height="42px;"/>
+        <MudSkeleton Width="80%"/>
+        <MudSkeleton Width="100%"/>
+    </MudCardContent>
+    <MudCardActions>
+        <MudSkeleton Width="64px" Height="40px" Class="ml-2"/>
+        <MudSkeleton Width="105px" Height="40px" Class="ml-3"/>
+    </MudCardActions>
+    <MudOverlay Visible="true" DarkBackground="true" Absolute="true">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+    </MudOverlay>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" sm="7">
+            <MudPaper Class="pa-4">
+                <MudForm Spacing="7" Model="@_model" @ref="@form" Validation="@(_orderValidator.ValidateValue)" ValidationDelay="0">
+                    <MudNumericField Label="Quantity"
+                                     HelperText="You can order from 1 to 5 pizzas."
+                                     Min="1" Max="5"
+                                     @bind-Value="_model.Quantity"
+                                     For="@(() => _model.Quantity)"
+                                     Required
+                                     Immediate="true"/>
+                    <MudSelect T="string"
+                               Label="Available Toppings"
+                               MultiSelection="true"
+                               Clearable
+                               @bind-Value="@_model.ToppingsCollection"
+                               @bind-SelectedValues="@ToppingsSelected"
+                               HelperText="Please select your favorite toppings."
+                               For="@(() => _model.ToppingsCollection)"
+                               Required
+                               Immediate="true">
+                        @foreach (var topping in OrderModel.AvailableToppings)
+                        {
+                            <MudSelectItem T="string" Value="@topping">@topping</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudInputLabel>Size</MudInputLabel>
+                    <div class="d-flex">
+                        <MudRadioGroup Required RequiredError="You should choose one size." @bind-Value="@_model.Size" For="@(() => _model.Size)">
+                            <MudRadio Value="@(PizzaSize.Small)" Color="Color.Primary">@nameof(PizzaSize.Small)</MudRadio>
+                            <MudRadio Value="@(PizzaSize.Medium)" Color="Color.Primary">@nameof(PizzaSize.Medium)</MudRadio>
+                            <MudRadio Value="@(PizzaSize.Large)" Color="Color.Primary">@nameof(PizzaSize.Large)</MudRadio>
+                            <MudRadio Value="@(PizzaSize.ExtraLarge)" Color="Color.Primary">@nameof(PizzaSize.ExtraLarge)</MudRadio>
+                        </MudRadioGroup>
+                    </div>
+                    <MudButton Disabled="@(ToppingsSelected.Count() > 5)" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await Submit())">Order</MudButton>
+                </MudForm>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="5">
+            <MudCarousel Class="mud-width-full" Style="height:400px;" TData="object" AutoCycle="true" ShowBullets="false">
+                <MudCarouselItem Transition="Transition.Fade">
+                    <div class="d-flex" style="height:100%">
+                        <MudImage Class="mx-auto my-auto" Src="img/Slide-1.jpg" Fluid="true"/>
+                    </div>
+                </MudCarouselItem>
+                <MudCarouselItem Transition="Transition.Fade">
+                    <div class="d-flex" style="height:100%">
+                        <MudImage Class="mx-auto my-auto" Src="img/Slide-2.jpg" Fluid="true"/>
+                    </div>
+                </MudCarouselItem>
+                <MudCarouselItem Transition="Transition.Fade">
+                    <div class="d-flex" style="height:100%">
+                        <MudImage Class="mx-auto my-auto" Src="img/Slide-3.jpg" Fluid="true"/>
+                    </div>
+                </MudCarouselItem>
+                <MudCarouselItem Transition="Transition.Fade">
+                    <div class="d-flex" style="height:100%">
+                        <MudImage Class="mx-auto my-auto" Src="img/Slide-4.jpg" Fluid="true"/>
+                    </div>
+                </MudCarouselItem>
+                <MudCarouselItem Transition="Transition.Fade">
+                    <div class="d-flex" style="height:100%">
+                        <MudImage Class="mx-auto my-auto" Src="img/Slide-5.jpg" Fluid="true"/>
+                    </div>
+                </MudCarouselItem>
+            </MudCarousel>
+        </MudItem>
+        <MudItem xs="12">
+            <MudText Typo="Typo.subtitle2" Align="Align.Center">
+                <MudAlert Severity="Severity.Info">Fill out the form correctly to sent your order.</MudAlert>
+            </MudText>
+        </MudItem>
+    </MudGrid>
+    <MudGrid Class="mt-3">
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Align="Align.Center">
+                By. <MudLink Href="https://github.com/ferventurart">Fernando Ventura</MudLink>&nbsp;<MudIcon Size="Size.Small" Icon="@Icons.Custom.Brands.GitHub" Color="Color.Default"></MudIcon>
+            </MudText>
+        </MudItem>
+    </MudGrid>
+}
+
+
+@code {
+
+    private bool _visible;
+
+    MudForm form;
+
+    [Inject] ISnackbar Snackbar { get; set; }
+
+    readonly OrderModel _model = new();
+
+    IEnumerable<string> ToppingsSelected { get; set; } = [];
+
+    readonly OrderModelFluentValidator _orderValidator = new();
+
+    private void NewOrder()
+    {
+        ToppingsSelected = [];
+        _model.Toppings = ToppingsSelected;
+        _model.Quantity = 1;
+        _model.Size = PizzaSize.Small;
+    }
+
+    private async Task Submit()
+    {
+        _visible = true;
+        _model.Toppings = ToppingsSelected;
+
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            await SendOrder();
+        }
+
+        _visible = false;
+    }
+
+    private async Task SendOrder()
+    {
+        await Task.Delay(1800);
+        try
+        {
+            await PizzaOrderApi.CreateOrder(_model);
+            Snackbar.Add("Order created successfully!", Severity.Success);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add("Something goes wrong! Please try again", Severity.Warning);
+        }
+    }
+
+    /// <summary>
+    ///     A standard AbstractValidator which contains multiple rules and can be shared with the back end API
+    /// </summary>
+    /// <typeparam name="OrderPizza"></typeparam>
+    public class OrderModelFluentValidator : AbstractValidator<OrderModel>
+    {
+        public OrderModelFluentValidator()
+        {
+            RuleFor(r => r.Quantity)
+                .NotEmpty()
+                .GreaterThan(0)
+                .InclusiveBetween(1, 5);
+
+            RuleFor(r => r.ToppingsCollection)
+                .NotEmpty().WithMessage("Toppings are required.")
+                .Must(ContainFiveToppingsOrLess).WithMessage("You must choose up to 5 available toppings.")
+                .Must(ContainValidToppings).WithMessage("You must choose one of the available toppings.");
+
+            RuleFor(r => r.Size)
+                .IsInEnum();
+        }
+
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<OrderModel>.CreateWithOptions((OrderModel)model, x => x.IncludeProperties(propertyName)));
+            return result.IsValid ? Array.Empty<string>() : result.Errors.Select(e => e.ErrorMessage);
+        };
+
+        private static bool ContainFiveToppingsOrLess(string commaSeparatedValues)
+        {
+            if (string.IsNullOrEmpty(commaSeparatedValues))
+                return false;
+
+            var values = commaSeparatedValues.Split(',');
+
+            return values.Length <= 5;
+        }
+
+        private static bool ContainValidToppings(string commaSeparatedValues)
+        {
+            if (string.IsNullOrEmpty(commaSeparatedValues))
+                return false;
+
+            var values = commaSeparatedValues.Split(',');
+            return values.All(value => OrderModel.AvailableToppings.Contains(value.Trim()));
+        }
+    }
+
+}
