@@ -8,6 +8,7 @@ public class OrderModel
     public IEnumerable<string> Toppings { get; set; } = [];
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public PizzaSize Size { get; set; }
+    public string Comments { get; set; }
     
     [JsonIgnore]
     public string ToppingsCollection { get; set; }

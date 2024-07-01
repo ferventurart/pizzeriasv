@@ -18,7 +18,6 @@ public static class OrdersModule
         group.MapGet("", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
             {
                 var orders = await dbContext.Orders.ToListAsync(cancellationToken);
-
                 
                 var response = orders.Select(s => new OrderResponse
                 {
@@ -26,6 +25,7 @@ public static class OrdersModule
                     Quantity = s.Quantity,
                     Size = s.Size,
                     Timestamp = s.Timestamp,
+                    Comments = s.Comments,
                     Toppings = s.Toppings.ToList()
                 });
 
@@ -53,6 +53,7 @@ public static class OrdersModule
                     Id = order.Id,
                     Quantity = order.Quantity,
                     Size = order.Size,
+                    Comments = order.Comments,
                     Timestamp = order.Timestamp,
                     Toppings = order.Toppings.ToList()
                 };
@@ -89,6 +90,7 @@ public static class OrdersModule
                     Id = Guid.NewGuid(),
                     Quantity = request.Quantity,
                     Size = request.Size,
+                    Comments = request.Comments,
                     Status = OrderStatus.Created,
                     Timestamp = DateTime.Now
                 };
@@ -111,6 +113,7 @@ public static class OrdersModule
                     Quantity = order.Quantity,
                     Size = order.Size,
                     Status = order.Status,
+                    Comments = order.Comments,
                     Toppings = order.Toppings.ToList(),
                 }, cancellationToken);
                 
@@ -128,7 +131,8 @@ public static class OrdersModule
                         {
                             Quantity = 1,
                             Size = PizzaSize.ExtraLarge,
-                            Toppings = Order.AvailableToppings.ToList()
+                            Toppings = Order.AvailableToppings.ToList(),
+                            Comments = "This is an example"
                         }
                     ));
                 return op;
@@ -146,8 +150,8 @@ public record OrderRequest
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public PizzaSize Size { get; init; }
-
     public List<string> Toppings { get; init; } = [];
+    public string Comments { get; init; } = string.Empty;
 };
 
 internal class OrderRequestValidator : AbstractValidator<OrderRequest>
@@ -163,6 +167,9 @@ internal class OrderRequestValidator : AbstractValidator<OrderRequest>
         RuleFor(r => r.Toppings)
             .Must(t => t.Count <= 5)
             .WithMessage("The pizza cannot have more than 5 ingredients.");
+
+        RuleFor(r => r.Comments)
+            .MaximumLength(50);
     }
 }
 public record OrderResponse
@@ -170,10 +177,10 @@ public record OrderResponse
     public Guid Id { get; init; }
     public int Quantity { get; init; }
     public IReadOnlyList<string> Toppings { get; init; }
-
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public PizzaSize Size { get; init; }
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public OrderStatus Status { get; init; }
+    public string Comments { get; init; }
     public DateTime Timestamp { get; init; }
 };

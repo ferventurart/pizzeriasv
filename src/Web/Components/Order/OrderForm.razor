@@ -59,6 +59,13 @@ else
                             <MudRadio Value="@(PizzaSize.ExtraLarge)" Color="Color.Primary">@nameof(PizzaSize.ExtraLarge)</MudRadio>
                         </MudRadioGroup>
                     </div>
+                    <MudTextField T="string" 
+                                  Placeholder="Please add any special necessity or food allergy"
+                                  Label="Comments" 
+                                  Variant="Variant.Text" 
+                                  @bind-Value="_model.Comments" Lines="5" 
+                                  For="@(() => _model.Comments)"
+                    />
                     <MudButton Disabled="@(ToppingsSelected.Count() > 5)" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await Submit())">Order</MudButton>
                 </MudForm>
             </MudPaper>
@@ -127,6 +134,7 @@ else
         ToppingsSelected = [];
         _model.Toppings = ToppingsSelected;
         _model.Quantity = 1;
+        _model.Comments = string.Empty;
         _model.Size = PizzaSize.Small;
     }
 
@@ -179,6 +187,9 @@ else
 
             RuleFor(r => r.Size)
                 .IsInEnum();
+            
+            RuleFor(r => r.Comments)
+                .MaximumLength(50);
         }
 
         public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>

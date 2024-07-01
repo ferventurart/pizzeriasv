@@ -11,6 +11,7 @@ public record KitchenOrderEvent
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public PizzaSize Size { get; init; }
     public List<string> Toppings { get; init; } = [];
+    public string Comments { get; init; }
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public OrderStatus Status { get; init; }
 }

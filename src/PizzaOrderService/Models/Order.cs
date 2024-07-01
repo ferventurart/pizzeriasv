@@ -7,6 +7,7 @@ public sealed class Order
     public ICollection<string> Toppings { get; init; } = [];
     public int Quantity { get; set; }
     public OrderStatus Status { get; set; }
+    public string Comments { get; set; }
     public DateTime Timestamp { get; set; }
 
     public static readonly string[] AvailableToppings =
