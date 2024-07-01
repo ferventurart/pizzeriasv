@@ -147,11 +147,11 @@ else
 
     private async Task SendOrder()
     {
-        await Task.Delay(1800);
         try
         {
             await PizzaOrderApi.CreateOrder(_model);
             Snackbar.Add("Order created successfully!", Severity.Success);
+            NewOrder();
         }
         catch (ApiException exception)
         {
